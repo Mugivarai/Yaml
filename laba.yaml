@@ -1,0 +1,409 @@
+openapi: 3.0.3
+info:
+  title: YouTube API
+  description: |-
+    This API provides access to YouTube's core features, allowing developers to interact with videos, channels, playlists, comments, and analytics.
+  termsOfService: https://www.youtube.com/t/terms
+  contact:
+    email: api-support@youtube.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+externalDocs:
+  description: Full documentation
+  url: https://developers.google.com/youtube
+servers:
+  - url: https://www.googleapis.com/youtube/v3
+tags:
+  - name: videos
+    description: Operations related to video management (upload, update, delete, retrieve)
+  - name: channels
+    description: Access and manage YouTube channels
+  - name: playlists
+    description: Manage playlists and retrieve related data
+  - name: comments
+    description: Interact with video comments
+  - name: analytics
+    description: Retrieve analytics data for videos and channels
+paths:
+  /videos:
+    get:
+      summary: Retrieve a list of videos
+      tags:
+        - videos
+      parameters:
+        - $ref: '#/components/parameters/videoId'
+        - $ref: '#/components/parameters/part'
+      responses:
+        '200':
+          description: A list of video details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoListResponse'
+    delete:
+      summary: Delete a video
+      tags:
+       - videos
+      parameters:
+       - $ref: '#/components/parameters/videoId'
+      responses:
+        '200':
+          description: The video was deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Video deleted successfully
+    put:
+      summary: Update videos statistics
+      tags:
+        - videos
+      parameters:
+        - name: videoId
+          in: query
+          description: The ID of the video whose statistics are to be updated
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The updated statistics for the video
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                views:
+                  type: integer
+                  description: Updated number of views
+                  example: 100000
+                likes:
+                  type: integer
+                  description: Updated number of likes
+                  example: 5000
+                dislikes:
+                  type: integer
+                  description: Updated number of dislikes
+                  example: 200
+                comments:
+                  type: integer
+                  description: Updated number of comments
+                  example: 1500
+      responses:
+        '200':
+          description: Video statistics updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Channel statistics updated successfully
+                  updatedStatistics:
+                    type: object
+                    properties:
+                      views:
+                        type: integer
+                      likes:
+                        type: integer
+                      dislikes:
+                        type: integer
+                      comments:
+                        type: integer
+        '400':
+          description: Invalid input or channel not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid channel ID or malformed request body
+
+  /channels:
+    get:
+      summary: Retrieve channel information
+      tags:
+        - channels
+      parameters:
+        - $ref: '#/components/parameters/channelId'
+        - $ref: '#/components/parameters/part'
+      responses:
+        '200':
+          description: Channel information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+  /playlists:
+    get:
+      summary: Retrieve playlists for a channel
+      tags:
+        - playlists
+      parameters:
+        - $ref: '#/components/parameters/channelId'
+        - $ref: '#/components/parameters/part'
+      responses:
+        '200':
+          description: A list of playlists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaylistListResponse'
+    put:
+      summary: Update playlist
+      tags:
+       - playlists
+      parameters:
+       - name: playlistId
+         in: query
+         description: The ID of the playlist to update
+         required: true
+         schema:
+           type: string
+      requestBody:
+        description: New playlist
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaylistListResponse'
+      responses:
+        '200':
+          description: A playlist updated
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Playlist updated successfully
+        '400':
+          description: A playlist not founded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: A playlist not update
+  /comments:
+    get:
+      summary: Retrieve comments for a video
+      tags:
+        - comments
+      parameters:
+        - $ref: '#/components/parameters/videoId'
+        - $ref: '#/components/parameters/part'
+      responses:
+        '200':
+          description: A list of comments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListResponse'
+    post:
+      summary: Post a new comment on a video
+      tags:
+        - comments
+      requestBody:
+        description: The content of the comment
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Comment'
+      responses:
+        '201':
+          description: Comment posted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+    delete:
+      summary: Delete comments
+      tags:
+       - comments
+      parameters:
+       - name: videoIds
+         in: query
+         description: Comma-separated commets IDs to delete
+         required: true
+         schema:
+           type: array
+           items:
+            $ref: '#/components/parameters/videoId'
+      responses:
+        '200':
+          description: The list of comments was deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Comments deleted successfully
+  /analytics:
+    get:
+      summary: Retrieve analytics data
+      tags:
+        - analytics
+      parameters:
+        - name: metric
+          in: query
+          description: The metric to retrieve (e.g., views, likes)
+          required: true
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          description: The start date for the analytics period (YYYY-MM-DD)
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          description: The end date for the analytics period (YYYY-MM-DD)
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Analytics data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsResponse'
+components:
+  parameters:
+    videoId:
+      name: videoId
+      in: query
+      description: The ID of the video
+      required: true
+      schema:
+        type: string
+    channelId:
+      name: channelId
+      in: query
+      description: The ID of the channel
+      required: true
+      schema:
+        type: string
+    part:
+      name: part
+      in: query
+      description: Comma-separated list of resource parts to include in the response (snippet, statistics)
+      required: true
+      schema:
+        type: string
+    commentId:
+      name: commentId
+      in: query
+      description: The ID of the comment
+      required: true
+      schema:
+        type: string
+  schemas:
+    Video:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+        statistics:
+          $ref: '#/components/schemas/Statistics'
+    VideoListResponse:
+      type: object
+      properties:
+        videos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Video'
+    Channel:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        statistics:
+          $ref: '#/components/schemas/Statistics'
+    PlaylistListResponse:
+      type: object
+      properties:
+        playlists:
+          type: array
+          items:
+            $ref: '#/components/schemas/Playlist'
+    Playlist:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+        author:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+    CommentListResponse:
+      type: object
+      properties:
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+    AnalyticsResponse:
+      type: object
+      properties:
+        metric:
+          type: string
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              value:
+                type: integer
+    Statistics:
+      type: object
+      properties:
+        views:
+          type: integer
+        likes:
+          type: integer
+        dislikes:
+          type: integer
+        comments:
+          type: integer
