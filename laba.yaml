@@ -16,38 +16,37 @@ externalDocs:
 servers:
   - url: https://www.googleapis.com/youtube/v3
 tags:
-  - name: videos
+  - name: video
     description: Operations related to video management (upload, update, delete, retrieve)
-  - name: channels
-    description: Access and manage YouTube channels
-  - name: playlists
-    description: Manage playlists and retrieve related data
-  - name: comments
-    description: Interact with video comments
-  - name: analytics
-    description: Retrieve analytics data for videos and channels
+  - name: channel
+    description: Access and manage YouTube channel
+  - name: playlist
+    description: Manage playlist and retrieve related data
+  - name: comment
+    description: Interact with video comment
 paths:
-  /videos:
+  /video/{channelId}/{videoId}:
     get:
-      summary: Retrieve a list of videos
+      summary: Selected video
       tags:
-        - videos
+        - video
       parameters:
+        - $ref: '#/components/parameters/channelId'
         - $ref: '#/components/parameters/videoId'
-        - $ref: '#/components/parameters/part'
       responses:
         '200':
-          description: A list of video details
+          description: A video
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VideoListResponse'
+                $ref: '#/components/schemas/Video'
     delete:
       summary: Delete a video
       tags:
-       - videos
+       - video
       parameters:
-       - $ref: '#/components/parameters/videoId'
+        - $ref: '#/components/parameters/channelId'
+        - $ref: '#/components/parameters/videoId'
       responses:
         '200':
           description: The video was deleted.
@@ -59,82 +58,47 @@ paths:
                   message:
                     type: string
                     example: Video deleted successfully
+  /video/{channelId}/{videoId}/update-statistics:
     put:
-      summary: Update videos statistics
+      summary: Update video statistics
       tags:
-        - videos
+       - video
       parameters:
-        - name: videoId
-          in: query
-          description: The ID of the video whose statistics are to be updated
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/channelId'
+        - $ref: '#/components/parameters/videoId'
       requestBody:
-        description: The updated statistics for the video
+        description: New statistics
         required: true
         content:
           application/json:
             schema:
               type: object
               properties:
-                views:
-                  type: integer
-                  description: Updated number of views
-                  example: 100000
-                likes:
-                  type: integer
-                  description: Updated number of likes
-                  example: 5000
-                dislikes:
-                  type: integer
-                  description: Updated number of dislikes
-                  example: 200
-                comments:
-                  type: integer
-                  description: Updated number of comments
-                  example: 1500
+                  views:
+                    type: integer
+                    description: Updated number of views
+                  likes:
+                    type: integer
+                    description: Updated number of likes
+                  dislikes:
+                    type: integer
+                    description: Updated number of dislikes
+                  comments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Comment'
       responses:
         '200':
-          description: Video statistics updated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Channel statistics updated successfully
-                  updatedStatistics:
-                    type: object
-                    properties:
-                      views:
-                        type: integer
-                      likes:
-                        type: integer
-                      dislikes:
-                        type: integer
-                      comments:
-                        type: integer
+          description: Statistics have been successfully updated
         '400':
-          description: Invalid input or channel not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Invalid channel ID or malformed request body
-
-  /channels:
+          description: Bad request
+  /channel/{channelId}:
     get:
       summary: Retrieve channel information
       tags:
-        - channels
+        - channel
       parameters:
         - $ref: '#/components/parameters/channelId'
-        - $ref: '#/components/parameters/part'
       responses:
         '200':
           description: Channel information
@@ -142,76 +106,143 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Channel'
-  /playlists:
-    get:
-      summary: Retrieve playlists for a channel
+    delete:
+      summary: Delete the channel
       tags:
-        - playlists
+        - channel
       parameters:
         - $ref: '#/components/parameters/channelId'
-        - $ref: '#/components/parameters/part'
       responses:
         '200':
-          description: A list of playlists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlaylistListResponse'
-    put:
-      summary: Update playlist
+          description: The channel has been deleted
+        '418':
+          description: I don't know
+  /channel/{channelId}/add-video:
+    post:
+      summary: Add new video
       tags:
-       - playlists
+        - channel
       parameters:
-       - name: playlistId
-         in: query
-         description: The ID of the playlist to update
-         required: true
-         schema:
-           type: string
+        - $ref: '#/components/parameters/channelId'
       requestBody:
-        description: New playlist
+        description: New video
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PlaylistListResponse'
+              $ref: '#/components/schemas/Video'
       responses:
         '200':
-          description: A playlist updated
+          description: The video has been added
+        '418':
+          description: I don't know
+  /channel/{channelId}/update-countSubscribers:
+    put:
+      summary: Update count Subscribers
+      tags:
+       - channel
+      parameters:
+        - $ref: '#/components/parameters/channelId'
+      requestBody:
+        required: true
+        content: 
+          application/json:
+            schema:
+              type: integer
+      responses:
+        '200':
+          description: The number of subscribers has been updated
+        '418':
+          description: I don't know
+  /playlist/{channelId}/{playlistId}:
+    get:
+      summary: Return a playlist
+      tags:
+        - playlist
+      parameters:
+        - $ref: '#/components/parameters/channelId'
+        - $ref: '#/components/parameters/playlistId'
+      responses:
+        '200':
+          description: A playlist from the channel
           content:
             application/json:
               schema:
-                type: string
-                example: Playlist updated successfully
-        '400':
-          description: A playlist not founded
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: A playlist not update
-  /comments:
+                type: array
+                items: 
+                  $ref: '#/components/schemas/Playlist'
+        '500':
+          description: The playlist could not be found 
+    post:
+      summary: Add new video
+      tags:
+        - playlist
+      parameters:
+        - $ref: '#/components/parameters/channelId'
+        - $ref: '#/components/parameters/playlistId'
+      requestBody:
+        description: Id new video
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Video'
+      responses:
+        '200':
+          description: The video has been added to the playlist
+        '418':
+          description: I don't know
+    delete:
+      summary: Delete playlist
+      tags:
+       - playlist
+      parameters:
+        - $ref: '#/components/parameters/channelId'
+        - $ref: '#/components/parameters/playlistId'
+      responses:
+        '200':
+          description: The operation was successful
+        '418':
+          description: An unknown error occurred and the playlist was not deleted
+  /playlist/{channelId}/{playlistId}/{videoId}::
+    delete:
+      summary: Delete video
+      tags:
+        - playlist
+      parameters:
+        - $ref: '#/components/parameters/channelId'
+        - $ref: '#/components/parameters/playlistId'
+        - $ref: '#/components/parameters/videoId'
+      responses:
+        '200':
+          description: The video has been removed from the playlist
+        '418':
+          description: I don't know
+  /comment/{channelId}/{videoId}/all-comments:
     get:
       summary: Retrieve comments for a video
       tags:
-        - comments
+        - comment
       parameters:
+        - $ref: '#/components/parameters/channelId'
         - $ref: '#/components/parameters/videoId'
-        - $ref: '#/components/parameters/part'
       responses:
         '200':
           description: A list of comments
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CommentListResponse'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+  /comment/{channelId}/{videoId}:
     post:
       summary: Post a new comment on a video
       tags:
-        - comments
+        - comment
+      parameters:
+        - $ref: '#/components/parameters/channelId'
+        - $ref: '#/components/parameters/videoId'
       requestBody:
         description: The content of the comment
         required: true
@@ -222,23 +253,17 @@ paths:
       responses:
         '201':
           description: Comment posted successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Comment'
+        '418':
+          description: I don't know
+  /comment/{channelId}/{videoId}/{commentId}:
     delete:
       summary: Delete comments
       tags:
-       - comments
+       - comment
       parameters:
-       - name: videoIds
-         in: query
-         description: Comma-separated commets IDs to delete
-         required: true
-         schema:
-           type: array
-           items:
-            $ref: '#/components/parameters/videoId'
+        - $ref: '#/components/parameters/channelId'
+        - $ref: '#/components/parameters/videoId'
+        - $ref: '#/components/parameters/commentId'
       responses:
         '200':
           description: The list of comments was deleted.
@@ -250,39 +275,38 @@ paths:
                   message:
                     type: string
                     example: Comments deleted successfully
-  /analytics:
-    get:
-      summary: Retrieve analytics data
+  /comment/{channelId}/{videoId}/{commentId}/update-statistics:
+    put:
+      summary: Update comment statistics
       tags:
-        - analytics
+       - comment
       parameters:
-        - name: metric
-          in: query
-          description: The metric to retrieve (e.g., views, likes)
-          required: true
-          schema:
-            type: string
-        - name: startDate
-          in: query
-          description: The start date for the analytics period (YYYY-MM-DD)
-          required: true
-          schema:
-            type: string
-            format: date
-        - name: endDate
-          in: query
-          description: The end date for the analytics period (YYYY-MM-DD)
-          required: true
-          schema:
-            type: string
-            format: date
+        - $ref: '#/components/parameters/channelId'
+        - $ref: '#/components/parameters/videoId'
+        - $ref: '#/components/parameters/commentId'
+      requestBody:
+        description: New info
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                countLikes:
+                  type: integer
+                  example: 100
+                countDizlikes:
+                  type: integer
+                  example: 100
+                childComment:
+                  type: object
+                  example:
+                    $ref: '#/components/schemas/Comment'
       responses:
         '200':
-          description: Analytics data retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AnalyticsResponse'
+          description: The statistics have been updated
+        '418':
+          description: I don't know
 components:
   parameters:
     videoId:
@@ -299,10 +323,10 @@ components:
       required: true
       schema:
         type: string
-    part:
-      name: part
+    playlistId:
+      name: playlistId
       in: query
-      description: Comma-separated list of resource parts to include in the response (snippet, statistics)
+      description: The ID of the playlist
       required: true
       schema:
         type: string
@@ -319,6 +343,8 @@ components:
       properties:
         id:
           type: string
+        channelId:
+          type: string
         title:
           type: string
         description:
@@ -326,15 +352,14 @@ components:
         publishedAt:
           type: string
           format: date-time
-        statistics:
-          $ref: '#/components/schemas/Statistics'
-    VideoListResponse:
-      type: object
-      properties:
-        videos:
+        countLikes:
+          type: integer
+        countDizlikes:
+          type: integer
+        comments:
           type: array
           items:
-            $ref: '#/components/schemas/Video'
+            $ref: '#/components/schemas/Comment'
     Channel:
       type: object
       properties:
@@ -344,28 +369,44 @@ components:
           type: string
         description:
           type: string
-        statistics:
-          $ref: '#/components/schemas/Statistics'
-    PlaylistListResponse:
-      type: object
-      properties:
-        playlists:
+        countSubscribers:
+          type: integer
+        dateCreate:
+          type: string
+          format: date-time
+        playLists:
           type: array
           items:
             $ref: '#/components/schemas/Playlist'
+        videos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Video'
     Playlist:
       type: object
       properties:
         id:
           type: string
+        name:
+          type: string
         title:
           type: string
         description:
           type: string
+        chanelId:
+          type: string
+        videos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Video'
     Comment:
       type: object
       properties:
         id:
+          type: string
+        chanelId:
+          type: string
+        videoId:
           type: string
         text:
           type: string
@@ -374,36 +415,11 @@ components:
         publishedAt:
           type: string
           format: date-time
-    CommentListResponse:
-      type: object
-      properties:
-        comments:
+        countLikes:
+          type: integer
+        countDizlikes:
+          type: integer
+        childComments:
           type: array
-          items:
+          items: 
             $ref: '#/components/schemas/Comment'
-    AnalyticsResponse:
-      type: object
-      properties:
-        metric:
-          type: string
-        data:
-          type: array
-          items:
-            type: object
-            properties:
-              date:
-                type: string
-                format: date
-              value:
-                type: integer
-    Statistics:
-      type: object
-      properties:
-        views:
-          type: integer
-        likes:
-          type: integer
-        dislikes:
-          type: integer
-        comments:
-          type: integer
